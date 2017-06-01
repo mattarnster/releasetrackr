@@ -25,5 +25,6 @@ func main() {
 	http.Handle("/", middleware.ContentTypeMiddleware(httpIndex))
 	http.Handle("/track", middleware.ContentTypeMiddleware(httpTrack))
 	http.Handle("/verify", middleware.ContentTypeMiddleware(httpVerify))
+
 	http.ListenAndServe(":3000", nil)
 }
