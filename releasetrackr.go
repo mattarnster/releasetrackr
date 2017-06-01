@@ -6,14 +6,8 @@ import (
 	"os"
 
 	"github.com/mattarnster/releasetrackr/handlers"
+	"github.com/mattarnster/releasetrackr/middleware"
 )
-
-func responseFormatMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		next.ServeHTTP(w, r)
-	})
-}
 
 func main() {
 	log.Println("releasetrackr - 0.1 started")
@@ -28,8 +22,8 @@ func main() {
 	httpTrack := http.HandlerFunc(handlers.TrackHandler)
 	httpVerify := http.HandlerFunc(handlers.VerificationHandler)
 
-	http.Handle("/", responseFormatMiddleware(httpIndex))
-	http.Handle("/track", responseFormatMiddleware(httpTrack))
-	http.Handle("/verify", responseFormatMiddleware(httpVerify))
+	http.Handle("/", middleware.ContentTypeMiddleware(httpIndex))
+	http.Handle("/track", middleware.ContentTypeMiddleware(httpTrack))
+	http.Handle("/verify", middleware.ContentTypeMiddleware(httpVerify))
 	http.ListenAndServe(":3000", nil)
 }
