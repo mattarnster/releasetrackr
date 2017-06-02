@@ -112,6 +112,25 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	c = sess.DB("releasetrackr").C("repos")
+	//repo := &models.Repo{}
+
+	// Find an existing repo by name
+	// repoErr := c.Find(bson.M{"repo": tr.Repo}).One(&repo)
+	// var newRepoID bson.ObjectId
+	// if repoErr != nil {
+	// 	newRepoID = bson.NewObjectId()
+	// 	repo = &models.Repo{
+	// 		ID:   newRepoID,
+	// 		Repo: tr.Repo,
+	// 	}
+
+	// 	err := c.Insert(repo)
+	// 	if err != nil {
+	// 		panic("Unable to insert new repo")
+	// 	}
+	// }
+
 	trID := bson.NewObjectId()
 	c.Insert(&models.Track{
 		ID:     trID,
