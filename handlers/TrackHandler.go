@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/mattarnster/releasetrackr/helpers"
 	"github.com/mattarnster/releasetrackr/models"
@@ -44,7 +45,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	log.Printf("Incoming track request: %s from %s", tr.Repo, r.RemoteAddr)
+	log.Printf("[Handler][TrackHandler] Incoming track request: %s from %s", tr.Repo, r.RemoteAddr)
 
 	sess, err := helpers.GetDbSession()
 	if err != nil {
@@ -66,14 +67,15 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 			Email:            tr.Email,
 			VerificationCode: verification.String(),
 			Verified:         false,
+			CreatedAt:        time.Now(),
 		})
 
-		log.Printf("New user: %s, %s", uid, tr.Email)
+		log.Printf("[Handler][TrackHandler] New user, needs verification: %s, %s - {%s}", uid, tr.Email, verification.String())
 		helpers.SendVerificationEmail(tr.Email, verification.String())
 
 		json, _ := json.Marshal(&responses.SuccessResponse{
 			Code:    202,
-			Message: "Email verification required",
+			Message: "Email verification required.",
 		})
 
 		w.WriteHeader(202)
@@ -88,7 +90,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 			Code:  403,
 			Error: "Verification required - Check your email.",
 		})
-		log.Println("Responding with verification required.")
+		log.Println("[Handler][TrackHandler] Responding with verification required.")
 		w.WriteHeader(403)
 		w.Write(response)
 		return
@@ -103,7 +105,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 			Error: "You've already subscribed to be notified about this repository.",
 		})
 
-		log.Printf("User already subscribed to repo: %s - %s", user.Email, tr.Repo)
+		log.Printf("[Handler][TrackHandler] User already subscribed to repo: %s - %s", user.Email, tr.Repo)
 
 		w.WriteHeader(409)
 		w.Write(response)
@@ -117,7 +119,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 		Repo:   tr.Repo,
 	})
 
-	log.Printf("New track request: %s from %s", trID.String(), user.Email)
+	log.Printf("[Handler][TrackHandler] New track request: %s from %s for %s", trID.String(), user.Email, tr.Repo)
 
 	json, _ := json.Marshal(&responses.SuccessResponse{
 		Code:    201,

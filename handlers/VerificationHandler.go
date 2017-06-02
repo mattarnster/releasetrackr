@@ -33,14 +33,14 @@ func VerificationHandler(w http.ResponseWriter, r *http.Request) {
 			})
 			w.WriteHeader(400)
 			w.Write(json)
-			log.Printf("Verification token fail: %s", r.RemoteAddr)
+			log.Printf("[Handler][VerificationHandler] Verification token fail: %s", r.RemoteAddr)
 			return
 		}
 
 		change := bson.M{"$set": bson.M{"verified": true}}
 		c.Update(user, change)
 
-		log.Printf("Verification token pass: %s - %s", key, r.RemoteAddr)
+		log.Printf("[Handler][VerificationHandler] Verification token pass: %s - %s", key, r.RemoteAddr)
 
 		json, _ := json.Marshal(&responses.SuccessResponse{
 			Code:    200,
