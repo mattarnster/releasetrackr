@@ -6,5 +6,5 @@ import "gopkg.in/mgo.v2/bson"
 type Track struct {
 	ID     bson.ObjectId `json:"id" bson:"_id,omitempty"`
 	UserID bson.ObjectId `json:"userID" bson:"userID,omitempty"`
-	Repo   string        `json:"repo" bson:"repo,omitempty"`
+	Repo   bson.ObjectId `json:"repoID" bson:"repoID,omitempty"`
 }

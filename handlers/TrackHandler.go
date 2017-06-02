@@ -95,10 +95,33 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(response)
 		return
 	}
+
+	c = sess.DB("releasetrackr").C("repos")
+	repo := &models.Repo{}
+
+	// Find an existing repo by name
+	repoErr := c.Find(bson.M{"repo": tr.Repo}).One(&repo)
+	var newRepoID bson.ObjectId
+
+	if repoErr != nil {
+		newRepoID = bson.NewObjectId()
+		repo = &models.Repo{
+			ID:   newRepoID,
+			Repo: tr.Repo,
+		}
+
+		err := c.Insert(repo)
+		if err != nil {
+			panic("Unable to insert new repo")
+		}
+
+		log.Printf("[Handler][TrackHandler] New repo added: %s for %s", tr.Repo, tr.Email)
+	}
+
 	// Already a user, stop them from making another record of the same.
 	c = sess.DB("releasetrackr").C("tracks")
 	record := &models.Track{}
-	dbtr := c.Find(bson.M{"userID": bson.ObjectId(user.ID), "repo": tr.Repo}).One(&record)
+	dbtr := c.Find(bson.M{"userID": bson.ObjectId(user.ID), "repoID": bson.ObjectId(repo.ID)}).One(&record)
 	if dbtr == nil {
 		response, _ := json.Marshal(&responses.ErrorResponse{
 			Code:  409,
@@ -112,30 +135,12 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c = sess.DB("releasetrackr").C("repos")
-	//repo := &models.Repo{}
-
-	// Find an existing repo by name
-	// repoErr := c.Find(bson.M{"repo": tr.Repo}).One(&repo)
-	// var newRepoID bson.ObjectId
-	// if repoErr != nil {
-	// 	newRepoID = bson.NewObjectId()
-	// 	repo = &models.Repo{
-	// 		ID:   newRepoID,
-	// 		Repo: tr.Repo,
-	// 	}
-
-	// 	err := c.Insert(repo)
-	// 	if err != nil {
-	// 		panic("Unable to insert new repo")
-	// 	}
-	// }
-
+	c = sess.DB("releasetrackr").C("tracks")
 	trID := bson.NewObjectId()
 	c.Insert(&models.Track{
 		ID:     trID,
 		UserID: user.ID,
-		Repo:   tr.Repo,
+		Repo:   repo.ID,
 	})
 
 	log.Printf("[Handler][TrackHandler] New track request: %s from %s for %s", trID.String(), user.Email, tr.Repo)
