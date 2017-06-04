@@ -1,8 +1,13 @@
 package jobs
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
+
+	"gopkg.in/mgo.v2/bson"
 
 	"github.com/mattarnster/releasetrackr/helpers"
 	"github.com/mattarnster/releasetrackr/models"
@@ -36,13 +41,49 @@ func GetNewReleases() {
 
 		defer resp.Body.Close()
 
-		// Fill the record with the data from the JSON
-		var record models.GithubReleases
+		var f interface{}
 
-		//var f interface{}
+		body, _ := ioutil.ReadAll(resp.Body)
 
-		//err := json.Unmarshal(resp.Body, &f)
+		err = json.Unmarshal(body, &f)
+		if err != nil {
+			log.Fatalf("[Job][GetNewReleases] Error unmarshaling JSON - likely invalid.")
+			return
+		}
 
-		log.Printf("[Job][GetNewReleases] New record: %v", record)
+		objects := f.([]interface{})
+		first := objects[0].(map[string]interface{})
+
+		c = sess.DB("releasetrackr").C("releases")
+		var existingRelease models.Release
+
+		err = c.Find(bson.M{"release_id": first["id"].(float64)}).One(&existingRelease)
+
+		if err != nil {
+			// Release doesn't exist, add it to the DB
+			newReleaseID := bson.NewObjectId()
+			createdAtTime, caTErr := time.Parse(time.RFC3339Nano, first["created_at"].(string))
+			if caTErr != nil {
+				log.Fatalf("Created at time parse failed %v", caTErr.Error())
+			}
+			publishedAtTime, paTErr := time.Parse(time.RFC3339Nano, first["published_at"].(string))
+			if paTErr != nil {
+				log.Fatalf("Published at time parse failed: %v", paTErr.Error())
+			}
+			newRelease := models.Release{
+				ID:                 newReleaseID,
+				ReleaseID:          first["id"].(float64),
+				URL:                first["html_url"].(string),
+				Tag:                first["tag_name"].(string),
+				Name:               first["name"].(string),
+				ReleaseCreatedAt:   createdAtTime,
+				ReleasePublishedAt: publishedAtTime,
+				Body:               first["body"].(string),
+			}
+
+			log.Printf("[Job][GetNewReleases] New release record: %v", newRelease)
+
+			c.Insert(&newRelease)
+		}
 	}
 }
