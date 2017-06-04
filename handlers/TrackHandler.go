@@ -14,6 +14,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+var repo = &models.Repo{}
+
 // TrackHandler handles creation and verification of Track requests
 func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -97,20 +99,17 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c = sess.DB("releasetrackr").C("repos")
-	repo := &models.Repo{}
 
 	// Find an existing repo by name
 	repoErr := c.Find(bson.M{"repo": tr.Repo}).One(&repo)
-	var newRepoID bson.ObjectId
 
 	if repoErr != nil {
-		newRepoID = bson.NewObjectId()
-		repo = &models.Repo{
-			ID:   newRepoID,
+		newRepo := &models.Repo{
+			ID:   bson.NewObjectId(),
 			Repo: tr.Repo,
 		}
 
-		err := c.Insert(repo)
+		err := c.Insert(&newRepo)
 		if err != nil {
 			panic("Unable to insert new repo")
 		}
@@ -136,14 +135,15 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c = sess.DB("releasetrackr").C("tracks")
-	trID := bson.NewObjectId()
-	c.Insert(&models.Track{
-		ID:     trID,
+	trModel := &models.Track{
+		ID:     bson.NewObjectId(),
 		UserID: user.ID,
 		Repo:   repo.ID,
-	})
+	}
 
-	log.Printf("[Handler][TrackHandler] New track request: %s from %s for %s", trID.String(), user.Email, tr.Repo)
+	c.Insert(&trModel)
+
+	log.Printf("[Handler][TrackHandler] New track request: %s from %s for %s", trModel.ID.String(), user.Email, tr.Repo)
 
 	json, _ := json.Marshal(&responses.SuccessResponse{
 		Code:    201,

@@ -21,7 +21,7 @@ func main() {
 	}
 
 	if os.Getenv("MONGO_HOST") != "" {
-		log.Println("Using MongoDB Host: " + os.Getenv("MONGO_HOST"))
+		log.Println("Using MongoDB Host: " + os.Getenv("MONGO_HOST") + ":" + os.Getenv("MONGO_PORT"))
 	} else {
 		panic("Environment variable doesn't exist or is empty: MONGO_HOST - Please make sure it is present and correct.")
 	}
