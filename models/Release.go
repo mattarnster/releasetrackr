@@ -16,4 +16,5 @@ type Release struct {
 	ReleasePublishedAt time.Time     `json:"release_published_at" bson:"release_published_at"`
 	ReleaseCreatedAt   time.Time     `json:"release_created_at" bson:"release_created_at"`
 	Body               string        `json:"release_body" bson:"release_body"`
+	RepoID             bson.ObjectId `json:"repo_id" bson:"repo_id"`
 }

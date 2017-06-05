@@ -39,6 +39,8 @@ func GetNewReleases() {
 			log.Printf("[Job][GetNewReleases] API Request failed: %v", err.Error())
 		}
 
+		log.Printf("[Job][GetNewReleases] Github Backoff in %v requests.", resp.Header["X-Ratelimit-Remaining"])
+
 		defer resp.Body.Close()
 
 		var f interface{}
@@ -56,10 +58,13 @@ func GetNewReleases() {
 
 		c = sess.DB("releasetrackr").C("releases")
 		var existingRelease models.Release
+		var isNewRelease = false
+		var newRelease models.Release
 
 		err = c.Find(bson.M{"release_id": first["id"].(float64)}).One(&existingRelease)
 
 		if err != nil {
+			isNewRelease = true
 			// Release doesn't exist, add it to the DB
 			newReleaseID := bson.NewObjectId()
 			createdAtTime, caTErr := time.Parse(time.RFC3339Nano, first["created_at"].(string))
@@ -70,7 +75,7 @@ func GetNewReleases() {
 			if paTErr != nil {
 				log.Fatalf("Published at time parse failed: %v", paTErr.Error())
 			}
-			newRelease := models.Release{
+			newRelease = models.Release{
 				ID:                 newReleaseID,
 				ReleaseID:          first["id"].(float64),
 				URL:                first["html_url"].(string),
@@ -79,11 +84,25 @@ func GetNewReleases() {
 				ReleaseCreatedAt:   createdAtTime,
 				ReleasePublishedAt: publishedAtTime,
 				Body:               first["body"].(string),
+				RepoID:             repo.ID,
 			}
 
 			log.Printf("[Job][GetNewReleases] New release record: %v", newRelease)
 
 			c.Insert(&newRelease)
+
+			repo.LastReleaseID = newRelease.ID
+
+			c = sess.DB("releasetrackr").C("repos")
+
+			err = c.UpdateId(repo.ID, &repo)
+			if err != nil {
+				panic(err)
+			}
 		}
+		if isNewRelease == true {
+			SendNewReleaseNotification(repo, newRelease)
+		}
+		// SendNewReleaseNotification(repo, newRelease)
 	}
 }

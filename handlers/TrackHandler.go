@@ -103,11 +103,16 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	// Find an existing repo by name
 	repoErr := c.Find(bson.M{"repo": tr.Repo}).One(&repo)
 
+	var isNewRepo = false
+	var newRepo models.Repo
+
 	if repoErr != nil {
-		newRepo := &models.Repo{
+		newRepo = models.Repo{
 			ID:   bson.NewObjectId(),
 			Repo: tr.Repo,
 		}
+
+		isNewRepo = true
 
 		err := c.Insert(&newRepo)
 		if err != nil {
@@ -135,13 +140,25 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c = sess.DB("releasetrackr").C("tracks")
+
+	var repoID bson.ObjectId
+
+	if isNewRepo {
+		repoID = newRepo.ID
+	} else {
+		repoID = repo.ID
+	}
+
 	trModel := &models.Track{
 		ID:     bson.NewObjectId(),
 		UserID: user.ID,
-		Repo:   repo.ID,
+		RepoID: repoID,
 	}
 
-	c.Insert(&trModel)
+	insErr := c.Insert(&trModel)
+	if insErr != nil {
+		log.Panicf("[Handler][TrackHandler] Could not insert new track request: %v", insErr)
+	}
 
 	log.Printf("[Handler][TrackHandler] New track request: %s from %s for %s", trModel.ID.String(), user.Email, tr.Repo)
 
