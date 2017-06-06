@@ -18,7 +18,7 @@ func SendNotificationEmail(repo models.Repo, email string, release models.Releas
 		"Hey there, A new release for "+repo.Repo+" has been detected!",
 		email)
 
-	message.SetHtml("<h1>releasetrackr</h1><p>Hey there.</p><p>A new release for " + repo.Repo + " has been detected! " + release.Body)
+	message.SetHtml("<h1>releasetrackr</h1><p>Hey there.</p><p>A new release for " + repo.Repo + " has been detected!</p><p>Tag: " + release.Tag + "</p><p>" + release.Body + "</p>")
 
 	resp, id, err := mg.Send(message)
 	if err != nil {

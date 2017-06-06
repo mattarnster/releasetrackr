@@ -38,7 +38,7 @@ func main() {
 	// Setting up scheduled jobs
 	go func() {
 		gocron.Every(1).Hour().Do(jobs.ClearNonVerifiedUsers)
-		gocron.Every(30).Minute().Do(jobs.GetNewReleases)
+		gocron.Every(2).Hours().Do(jobs.GetNewReleases)
 		gocron.RunAll()
 		<-gocron.Start()
 	}()
