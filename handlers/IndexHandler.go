@@ -11,7 +11,7 @@ import (
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	json, _ := json.Marshal(&responses.IndexResponse{
 		Name: "releasetrackr",
-		Ver:  "0.1",
+		Ver:  "1.0",
 	})
 	w.Write(json)
 }
