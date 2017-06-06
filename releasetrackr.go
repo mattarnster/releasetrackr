@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	log.Println("[App][Startup] releasetrackr - 0.1 started")
+	log.Println("[App][Startup] releasetrackr - 1.0 started")
 
 	if os.Getenv("MAILGUN_API_KEY") != "" {
 		log.Println("Mailgun API Key detected.")
