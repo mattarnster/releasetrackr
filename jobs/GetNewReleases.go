@@ -63,10 +63,11 @@ func GetNewReleases() {
 
 		err = c.Find(bson.M{"release_id": first["id"].(float64)}).One(&existingRelease)
 
+		// Not found - Add it to the DB
 		if err != nil {
 			isNewRelease = true
-			// Release doesn't exist, add it to the DB
 			newReleaseID := bson.NewObjectId()
+
 			createdAtTime, caTErr := time.Parse(time.RFC3339Nano, first["created_at"].(string))
 			if caTErr != nil {
 				log.Fatalf("Created at time parse failed %v", caTErr.Error())
@@ -75,6 +76,7 @@ func GetNewReleases() {
 			if paTErr != nil {
 				log.Fatalf("Published at time parse failed: %v", paTErr.Error())
 			}
+
 			newRelease = models.Release{
 				ID:                 newReleaseID,
 				ReleaseID:          first["id"].(float64),
@@ -100,9 +102,9 @@ func GetNewReleases() {
 				panic(err)
 			}
 		}
+
 		if isNewRelease == true {
 			SendNewReleaseNotification(repo, newRelease)
 		}
-		// SendNewReleaseNotification(repo, newRelease)
 	}
 }
