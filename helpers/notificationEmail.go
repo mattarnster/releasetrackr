@@ -21,8 +21,8 @@ type templateVars struct {
 func SendNotificationEmail(repo models.Repo, email string, release models.Release) {
 	mg := mailgun.NewMailgun("mattarnster.co.uk", os.Getenv("MAILGUN_API_KEY"), "")
 	message := mailgun.NewMessage(
-		"releasetrackr@mattarnster.co.uk",
-		"releasetrackr : New Release for "+repo.Repo,
+		"releasetrackr <releasetrackr@mattarnster.co.uk>",
+		"New Release for "+repo.Repo,
 		"Hey there, A new release for "+repo.Repo+" has been detected!",
 		email)
 
