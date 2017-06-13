@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>releasetrackr</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/semantic-ui/2.2.10/semantic.min.css">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+    <div class="wrapper ui one column centered grid container" style="margin-top: 3em;">
+        <div class="row">
+            <div class="sixteen column">
+                <h1 class="ui header" style="margin-bottom: 0;">{{.Name}}</h1>
+                <h2 class="ui sub header teal" style="margin-top: 0;">GitHub releases delivered straight to your inbox</h2>
+                <div class="ui divider"></div>
+            </div>
+        </div>
+        <div class="sixteen column row">
+            <div class="eleven wide column">
+                <h3 style="text-align: center;" class="ui teal header">Simply sign up using your email, and start tracking repos for new releases, it's as easy as that!</h3>
+            </div>
+        </div>
+        <div class="sixteen column row">
+            <div class="ten wide column">
+                <div class="ui icon message">
+                    <i class="privacy icon"></i>
+                    <div class="content">
+                        <div class="header">
+                            What data does this service collect?
+                        </div>
+                        <p>All this service needs is your email address and the repos you'd like to watch for new releases!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="sixteen column row">
+            <div class="ten wide column">
+                <div class="ui icon message">
+                    <i class="inbox icon"></i>
+                    <div class="content">
+                        <div class="header">
+                            Will I get spammed?
+                        </div>
+                        <p>releasetrackr will check for new releases every 2 hours, so if you're following a very active project, you may receive lots of emails!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="sixteen column row">
+            <div class="ten wide column">
+                <div class="validation">
+                </div>
+                <br>
+                <form class="ui form">
+                    <div class="field">
+                        <label>Email address</label>
+                        <input type="text" name="email" placeholder="Email Address">
+                    </div>
+                    <div class="field">
+                        <label>Repo - eg. facebook/react</label>
+                        <input type="text" name="repo" placeholder="Repo">
+                    </div>
+                    <div class="field">
+                        <div class="g-recaptcha" data-sitekey="6LcZur8SAAAAAI_0Eoz0cZvy20J58mAm-IxW0RXl"></div>
+                    </div>
+                    <button class="ui button" type="submit">Submit</button>
+                    <div class="ui icon info message">
+                        <i class="add user icon"></i>
+                        <div class="content">
+                            To make sure that you own the email address you're subscribing, you'll a receive a verification email shortly after submitting the form</p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/semantic-ui/2.2.10/semantic.min.js"></script>
+    <script type="text/javascript">
+
+        var alreadySubscribed = '<div class="ui icon error message"><i class="warning circle icon"></i><div class="content">You\'re already subscribed to this repository!</div></div>';
+        var emailVerification = '<div class="ui icon warning message"><i class="mail outline icon"></i><div class="content">A verification email is on it\'s way! Don\'t close this tab, you can submit the request again after verifying.</div></div>';
+
+        $('.form').submit(function(e) {
+            e.preventDefault();
+
+            $('.validation').empty();
+
+
+            var email = $('[name="email"]').val();
+            var repo = $('[name="repo"]').val();
+
+            $('.form').addClass('loading');
+
+            var json = {
+                "email": email,
+                "repo": repo
+            };
+
+            $.post('/track', JSON.stringify(json), function(data, status, xhr) {
+                
+            }).done(function(data) {
+                var response = JSON.parse(data);
+                console.log(response);
+            }).fail(function(xhr, status, error){
+                if (error === "Conflict") {
+                    $('.validation').append(alreadySubscribed);
+                    $('.form').removeClass('loading');
+                } else if (error === "Forbidden") {
+                    $('.validation').append(emailVerification);
+                    $('.form').removeClass('loading');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"encoding/json"
+	"html/template"
 	"net/http"
 
 	"github.com/mattarnster/releasetrackr/responses"
@@ -9,9 +9,11 @@ import (
 
 // IndexHandler lives at / and shows information about the application
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	json, _ := json.Marshal(&responses.IndexResponse{
+	resp := &responses.IndexResponse{
 		Name: "releasetrackr",
 		Ver:  "1.0",
-	})
-	w.Write(json)
+	}
+
+	t, _ := template.ParseFiles("templates/index.html")
+	t.Execute(w, resp)
 }

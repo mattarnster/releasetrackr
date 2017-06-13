@@ -47,6 +47,30 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
+	if tr.Email == "" {
+		json, _ := json.Marshal(&responses.ErrorResponse{
+			Code:  400,
+			Error: "Missing required field(s)",
+		})
+
+		w.WriteHeader(400)
+		w.Write(json)
+
+		return
+	}
+
+	if tr.Repo == "" {
+		json, _ := json.Marshal(&responses.ErrorResponse{
+			Code:  400,
+			Error: "Missing required field(s)",
+		})
+
+		w.WriteHeader(400)
+		w.Write(json)
+
+		return
+	}
+
 	log.Printf("[Handler][TrackHandler] Incoming track request: %s from %s", tr.Repo, r.RemoteAddr)
 
 	sess, err := helpers.GetDbSession()
@@ -76,11 +100,11 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 		helpers.SendVerificationEmail(tr.Email, verification.String())
 
 		json, _ := json.Marshal(&responses.SuccessResponse{
-			Code:    202,
+			Code:    403,
 			Message: "Email verification required.",
 		})
 
-		w.WriteHeader(202)
+		w.WriteHeader(403)
 		w.Write(json)
 
 		return

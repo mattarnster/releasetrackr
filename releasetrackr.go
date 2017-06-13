@@ -38,7 +38,7 @@ func main() {
 	httpVerify := http.HandlerFunc(handlers.VerificationHandler)
 	httpStats := http.HandlerFunc(handlers.StatsHandler)
 
-	http.Handle("/", middleware.ContentTypeMiddleware(httpIndex))
+	http.Handle("/", httpIndex)
 	http.Handle("/track", middleware.ContentTypeMiddleware(httpTrack))
 	http.Handle("/verify", middleware.ContentTypeMiddleware(httpVerify))
 	http.Handle("/stats", middleware.ContentTypeMiddleware(httpStats))
