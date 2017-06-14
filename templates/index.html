@@ -17,11 +17,20 @@
                 <div class="ui divider"></div>
             </div>
         </div>
-        <div class="sixteen column row">
-            <div class="eleven wide column">
-                <h3 style="text-align: center;" class="ui teal header">Simply sign up using your email, and start tracking repos for new releases, it's as easy as that!</h3>
+        <div class="ten column row">
+            <div class="ten wide column">
+                <p>releasetracker uses GitHub's API to notify you of new releases of repos you are interested in.</p>
+                <p>Simply sign up using the form below, specifying which repo you want to be kept up to date with, and releasetrackr will send you an email every time it detects a new release!</p>
             </div>
         </div>
+        <!--<div class="eight column row">
+            <div class="four wide column">
+                <p class="ui blue sub header" style="text-align: center">Over 80 repos tracked so far</p>
+            </div>
+            <div class="four wide column">
+                <p class="ui blue sub header" style="text-align: center">Over 100 users!</p>
+            </div>
+        </div>-->
         <div class="sixteen column row">
             <div class="ten wide column">
                 <div class="ui icon message">
@@ -80,15 +89,65 @@
     <script src="https://cdn.jsdelivr.net/semantic-ui/2.2.10/semantic.min.js"></script>
     <script type="text/javascript">
 
+        // Create cookie
+        function createCookie(name, value, days) {
+            var expires;
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime()+(days*24*60*60*1000));
+                expires = "; expires="+date.toGMTString();
+            }
+            else {
+                expires = "";
+            }
+            document.cookie = name+"="+value+expires+"; path=/";
+        }
+
+        // Read cookie
+        function readCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for(var i=0;i < ca.length;i++) {
+                var c = ca[i];
+                while (c.charAt(0) === ' ') {
+                    c = c.substring(1,c.length);
+                }
+                if (c.indexOf(nameEQ) === 0) {
+                    return c.substring(nameEQ.length,c.length);
+                }
+            }
+            return null;
+        }
+
+        // Erase cookie
+        function eraseCookie(name) {
+            createCookie(name,"",-1);
+        }
+
+        var rtCookie = readCookie('releasetrackr-email');
+        if (rtCookie) {
+            $('[name="email"]').val(rtCookie);
+            $('[name="repo"]').focus();
+        } else {
+            $('[name="email"]').focus();
+        }
+
+
         var alreadySubscribed = '<div class="ui icon error message"><i class="warning circle icon"></i><div class="content">You\'re already subscribed to this repository!</div></div>';
         var emailVerification = '<div class="ui icon warning message"><i class="mail outline icon"></i><div class="content">A verification email is on it\'s way! Don\'t close this tab, you can submit the request again after verifying.</div></div>';
         var unknownError = '<div class="ui icon error message"><i class="warning circle icon"></i><div class="content">Sorry, an unknown error occured. Try your request again in 5 minutes.</div></div>';
         var successfulSubscription = '<div class="ui icon success message"><i class="thumbs up outline icon"></i><div class="content">Your request was successful, keep your eyes on your inbox for the next release email!</div></div>';
+        var noCaptcha = '<div class="ui icon error message"><i class="warning circle icon"></i><div class="content">Please complete the captcha!</div></div>';
 
         $('.form').submit(function(e) {
             e.preventDefault();
 
             $('.validation').empty();
+
+            if (grecaptcha.getResponse() === "") {
+                $('.validation').append(noCaptcha);
+                return false;
+            }
 
 
             var email = $('[name="email"]').val();
@@ -98,16 +157,29 @@
 
             var json = {
                 "email": email,
-                "repo": repo
+                "repo": repo,
+                "recaptcha_response": grecaptcha.getResponse()
             };
 
             $.post('/track', JSON.stringify(json))
             .success(function(data, status, xhr) {
                 $('.validation').empty();
                 $('.validation').append(successfulSubscription);
+                
+                createCookie('releasetrackr-email', $('[name="email"]').val(), 365);
+                
                 $('.form').trigger('reset');
                 $('.form').removeClass('loading');
                 $('[name="email"]').focus();
+
+                var rtCookie = readCookie('releasetrackr-email');
+                if (rtCookie) {
+                    $('[name="email"]').val(rtCookie);
+                    $('[name="repo"]').focus();
+                }
+
+                grecaptcha.reset();
+
             }).fail(function(xhr, status, error){
                 if (error === "Conflict") {
                     $('.validation').append(alreadySubscribed);

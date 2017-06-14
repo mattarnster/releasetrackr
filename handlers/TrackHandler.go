@@ -3,9 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
+	"os"
 	"time"
 
+	recaptcha "github.com/dpapathanasiou/go-recaptcha"
 	"github.com/mattarnster/releasetrackr/helpers"
 	"github.com/mattarnster/releasetrackr/models"
 	"github.com/mattarnster/releasetrackr/requests"
@@ -18,6 +21,7 @@ var repo = &models.Repo{}
 
 // TrackHandler handles creation and verification of Track requests
 func TrackHandler(w http.ResponseWriter, r *http.Request) {
+	var recaptchaSecret = os.Getenv("RECAPTCHA_SECRET")
 
 	// If the method isn't POST, then send them back
 	// with a Bad Request (400)
@@ -52,6 +56,25 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
+	// Validate the recaptcha call
+	recaptcha.Init(recaptchaSecret)
+	// Extract the IP from the request headers
+	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+	// Determine whether or not they get to continue
+	recaptchaResult := recaptcha.Confirm(ip, tr.RecaptchaResponse)
+	// If not...
+	if recaptchaResult == false {
+		json, _ := json.Marshal(&responses.ErrorResponse{
+			Code:  400,
+			Error: "Recaptcha challenge failed!",
+		})
+
+		w.WriteHeader(400)
+		w.Write(json)
+
+		return
+	}
+
 	// If either the email or repo field aren't filled
 	// in then we'll send them back a 400.
 	if tr.Email == "" {
@@ -67,6 +90,18 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if tr.Repo == "" {
+		json, _ := json.Marshal(&responses.ErrorResponse{
+			Code:  400,
+			Error: "Missing required field(s)",
+		})
+
+		w.WriteHeader(400)
+		w.Write(json)
+
+		return
+	}
+
+	if tr.RecaptchaResponse == "" {
 		json, _ := json.Marshal(&responses.ErrorResponse{
 			Code:  400,
 			Error: "Missing required field(s)",
@@ -143,8 +178,6 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	var isNewRepo = false
 	var newRepo models.Repo
-
-	log.Printf("Repo: %s DB Result: %v %v", tr.Repo, repo, repoErr)
 
 	// If we can't find that particular repo in the DB
 	// then we'll make a new one.
