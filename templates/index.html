@@ -60,10 +60,10 @@
                     </div>
                     <div class="field">
                         <label>Repo - eg. facebook/react</label>
-                        <input type="text" name="repo" placeholder="Repo">
+                        <input type="text" name="repo" placeholder="facebook/react">
                     </div>
                     <div class="field">
-                        <div class="g-recaptcha" data-sitekey="6LcZur8SAAAAAI_0Eoz0cZvy20J58mAm-IxW0RXl"></div>
+                        <div class="g-recaptcha" data-sitekey="6LeLhiUUAAAAAPzGlPrqx9w8vQjfBvaEC834ER1S"></div>
                     </div>
                     <button class="ui button" type="submit">Submit</button>
                     <div class="ui icon info message">
@@ -82,6 +82,8 @@
 
         var alreadySubscribed = '<div class="ui icon error message"><i class="warning circle icon"></i><div class="content">You\'re already subscribed to this repository!</div></div>';
         var emailVerification = '<div class="ui icon warning message"><i class="mail outline icon"></i><div class="content">A verification email is on it\'s way! Don\'t close this tab, you can submit the request again after verifying.</div></div>';
+        var unknownError = '<div class="ui icon error message"><i class="warning circle icon"></i><div class="content">Sorry, an unknown error occured. Try your request again in 5 minutes.</div></div>';
+        var successfulSubscription = '<div class="ui icon success message"><i class="thumbs up outline icon"></i><div class="content">Your request was successful, keep your eyes on your inbox for the next release email!</div></div>';
 
         $('.form').submit(function(e) {
             e.preventDefault();
@@ -99,17 +101,22 @@
                 "repo": repo
             };
 
-            $.post('/track', JSON.stringify(json), function(data, status, xhr) {
-                
-            }).done(function(data) {
-                var response = JSON.parse(data);
-                console.log(response);
+            $.post('/track', JSON.stringify(json))
+            .success(function(data, status, xhr) {
+                $('.validation').empty();
+                $('.validation').append(successfulSubscription);
+                $('.form').trigger('reset');
+                $('.form').removeClass('loading');
+                $('[name="email"]').focus();
             }).fail(function(xhr, status, error){
                 if (error === "Conflict") {
                     $('.validation').append(alreadySubscribed);
                     $('.form').removeClass('loading');
                 } else if (error === "Forbidden") {
                     $('.validation').append(emailVerification);
+                    $('.form').removeClass('loading');
+                } else {
+                    $('.validation').append(unknownError);
                     $('.form').removeClass('loading');
                 }
             });

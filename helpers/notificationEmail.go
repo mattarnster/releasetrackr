@@ -7,13 +7,14 @@ import (
 	"os"
 
 	"github.com/mattarnster/releasetrackr/models"
+	"github.com/russross/blackfriday"
 
 	mailgun "gopkg.in/mailgun/mailgun-go.v1"
 )
 
 type templateVars struct {
 	RepoName    string
-	ReleaseBody string
+	ReleaseBody template.HTML
 	ReleaseTag  string
 }
 
@@ -46,7 +47,7 @@ func SendNotificationEmail(repo models.Repo, email string, release models.Releas
 func generateTemplateVars(repo models.Repo, release models.Release) templateVars {
 	return templateVars{
 		RepoName:    repo.Repo,
-		ReleaseBody: release.Body,
+		ReleaseBody: template.HTML(blackfriday.MarkdownBasic([]byte(release.Body))),
 		ReleaseTag:  release.Tag,
 	}
 }

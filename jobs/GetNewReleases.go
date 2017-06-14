@@ -54,6 +54,12 @@ func GetNewReleases() {
 		}
 
 		objects := f.([]interface{})
+
+		if len(objects) == 0 {
+			log.Printf("[Job][GetNewReleases] No releases found for %s", repo.Repo)
+			return
+		}
+
 		first := objects[0].(map[string]interface{})
 
 		c = sess.DB("releasetrackr").C("releases")

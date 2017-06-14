@@ -18,6 +18,9 @@ var repo = &models.Repo{}
 
 // TrackHandler handles creation and verification of Track requests
 func TrackHandler(w http.ResponseWriter, r *http.Request) {
+
+	// If the method isn't POST, then send them back
+	// with a Bad Request (400)
 	if r.Method != "POST" {
 		json, _ := json.Marshal(&responses.ErrorResponse{
 			Code:  400,
@@ -32,6 +35,8 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	var tr = &requests.TrackRequest{}
 
+	// If we couldn't decode the request, then we'll
+	// send them back with a 400.
 	err := decoder.Decode(tr)
 	if err != nil {
 		json, _ := json.Marshal(&responses.ErrorResponse{
@@ -47,6 +52,8 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
+	// If either the email or repo field aren't filled
+	// in then we'll send them back a 400.
 	if tr.Email == "" {
 		json, _ := json.Marshal(&responses.ErrorResponse{
 			Code:  400,
@@ -73,6 +80,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[Handler][TrackHandler] Incoming track request: %s from %s", tr.Repo, r.RemoteAddr)
 
+	// Grab the DB session from the helpers.
 	sess, err := helpers.GetDbSession()
 	if err != nil {
 		panic("Couldn't get DB session")
@@ -82,6 +90,8 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	c := sess.DB("releasetrackr").C("users")
 
+	// Try and find the existing user (if they exist)
+	// Otherwise create the user.
 	userErr := c.Find(bson.M{"email": tr.Email}).One(&user)
 	if userErr != nil {
 
@@ -97,12 +107,15 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 		})
 
 		log.Printf("[Handler][TrackHandler] New user, needs verification: %s, %s - {%s}", uid, tr.Email, verification.String())
-		helpers.SendVerificationEmail(tr.Email, verification.String())
 
+		// If they're a new user, we'll tell them
+		// that they need verification and send them off an email.
 		json, _ := json.Marshal(&responses.SuccessResponse{
 			Code:    403,
 			Message: "Email verification required.",
 		})
+
+		helpers.SendVerificationEmail(tr.Email, verification.String())
 
 		w.WriteHeader(403)
 		w.Write(json)
@@ -110,6 +123,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
+
 	// Existing user, make sure they're verified first...
 	if user.Verified == false {
 		response, _ := json.Marshal(&responses.ErrorResponse{
@@ -130,6 +144,10 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	var isNewRepo = false
 	var newRepo models.Repo
 
+	log.Printf("Repo: %s DB Result: %v %v", tr.Repo, repo, repoErr)
+
+	// If we can't find that particular repo in the DB
+	// then we'll make a new one.
 	if repoErr != nil {
 		newRepo = models.Repo{
 			ID:   bson.NewObjectId(),
@@ -146,10 +164,30 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[Handler][TrackHandler] New repo added: %s for %s", tr.Repo, tr.Email)
 	}
 
-	// Already a user, stop them from making another record of the same.
+	// If we made a new repo in the DB,
+	// make sure we know what we're searching for.
+	// This is a bit unnessecary to query for the newly
+	// created repo, but whatever.
+	var searchRepo bson.ObjectId
+	if isNewRepo {
+		searchRepo = newRepo.ID
+	} else {
+		searchRepo = repo.ID
+	}
+
+	// See if the user already has a subscription to
+	// watch this repo for releases.
 	c = sess.DB("releasetrackr").C("tracks")
 	record := &models.Track{}
-	dbtr := c.Find(bson.M{"userID": bson.ObjectId(user.ID), "repoID": bson.ObjectId(repo.ID)}).One(&record)
+	dbtr := c.Find(
+		bson.M{
+			"userID": bson.ObjectId(user.ID),
+			"repoID": bson.ObjectId(searchRepo),
+		},
+	).One(&record)
+
+	// If they do, we will get no error from the DB,
+	// but the user will get a 409 (Conflict)
 	if dbtr == nil {
 		response, _ := json.Marshal(&responses.ErrorResponse{
 			Code:  409,
@@ -165,6 +203,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	c = sess.DB("releasetrackr").C("tracks")
 
+	// Make a new "track" for this repo & user.
 	var repoID bson.ObjectId
 
 	if isNewRepo {
@@ -186,6 +225,8 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[Handler][TrackHandler] New track request: %s from %s for %s", trModel.ID.String(), user.Email, tr.Repo)
 
+	// Go back to the user letting them
+	// know that the request was successful.
 	json, _ := json.Marshal(&responses.SuccessResponse{
 		Code:    201,
 		Message: "Track request acknowledged.",
