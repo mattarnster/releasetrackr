@@ -177,9 +177,6 @@
                     $('[name="email"]').val(rtCookie);
                     $('[name="repo"]').focus();
                 }
-
-                grecaptcha.reset();
-
             }).fail(function(xhr, status, error){
                 if (error === "Conflict") {
                     $('.validation').append(alreadySubscribed);
@@ -192,6 +189,8 @@
                     $('.form').removeClass('loading');
                 }
             });
+
+            grecaptcha.reset();
         });
     </script>
 </body>
