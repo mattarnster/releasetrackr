@@ -6,7 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/mattarnster/releasetrackr/models"
+	"releasetrackr/models"
+
 	"github.com/russross/blackfriday"
 
 	mailgun "gopkg.in/mailgun/mailgun-go.v1"

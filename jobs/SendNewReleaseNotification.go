@@ -5,8 +5,8 @@ import (
 
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/mattarnster/releasetrackr/helpers"
-	"github.com/mattarnster/releasetrackr/models"
+	"releasetrackr/helpers"
+	"releasetrackr/models"
 )
 
 // SendNewReleaseNotification sends a new release notification

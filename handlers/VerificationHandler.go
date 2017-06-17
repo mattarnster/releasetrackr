@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/mattarnster/releasetrackr/helpers"
-	"github.com/mattarnster/releasetrackr/models"
-	"github.com/mattarnster/releasetrackr/responses"
+	"releasetrackr/helpers"
+	"releasetrackr/models"
+	"releasetrackr/responses"
 
 	"gopkg.in/mgo.v2/bson"
 )

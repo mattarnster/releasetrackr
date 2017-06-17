@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/mattarnster/releasetrackr/responses"
+	"releasetrackr/responses"
 )
 
 // IndexHandler lives at / and shows information about the application

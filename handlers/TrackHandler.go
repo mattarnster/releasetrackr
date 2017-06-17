@@ -9,10 +9,10 @@ import (
 	"time"
 
 	recaptcha "github.com/dpapathanasiou/go-recaptcha"
-	"github.com/mattarnster/releasetrackr/helpers"
-	"github.com/mattarnster/releasetrackr/models"
-	"github.com/mattarnster/releasetrackr/requests"
-	"github.com/mattarnster/releasetrackr/responses"
+	"releasetrackr/helpers"
+	"releasetrackr/models"
+	"releasetrackr/requests"
+	"releasetrackr/responses"
 	uuid "github.com/nu7hatch/gouuid"
 	"gopkg.in/mgo.v2/bson"
 )

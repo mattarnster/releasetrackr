@@ -5,7 +5,8 @@ import (
 
 	"time"
 
-	"github.com/mattarnster/releasetrackr/helpers"
+	"releasetrackr/helpers"
+
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

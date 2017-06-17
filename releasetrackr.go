@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/jasonlvhit/gocron"
-	"github.com/mattarnster/releasetrackr/handlers"
-	"github.com/mattarnster/releasetrackr/jobs"
-	"github.com/mattarnster/releasetrackr/middleware"
+	"releasetrackr/handlers"
+	"releasetrackr/jobs"
+	"releasetrackr/middleware"
 )
 
 func main() {
