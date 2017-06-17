@@ -2,11 +2,7 @@ version: '3'
 services:
   app:
     image: mattarnster/releasetrackr:1.0
-    environment:
-      MAILGUN_API_KEY: abcdef
-      MONGO_HOST: mongo
-      RT_DOMAIN: http://localhost
-      RECAPTCHA-SECRET: abcdef
+    env_file: .env
     links:
       - mongo
     ports:
