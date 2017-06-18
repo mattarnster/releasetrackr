@@ -8,7 +8,7 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     volumes:
-      - "../releasetrackr-data:/data/db"
+      - "/srv/releasetrackr-data:/data/db"
   
   mongo:
     image: mongo:latest
