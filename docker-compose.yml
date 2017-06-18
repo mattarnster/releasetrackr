@@ -6,7 +6,9 @@ services:
     links:
       - mongo
     ports:
-     - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - "../releasetrackr-data:/data/db"
   
   mongo:
     image: mongo:latest
