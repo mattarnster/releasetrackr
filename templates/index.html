@@ -178,10 +178,10 @@
                     $('[name="repo"]').focus();
                 }
             }).fail(function(xhr, status, error){
-                if (error === "Conflict") {
+                if (xhr.status === 409) {
                     $('.validation').append(alreadySubscribed);
                     $('.form').removeClass('loading');
-                } else if (error === "Forbidden") {
+                } else if (xhr.status === 403) {
                     $('.validation').append(emailVerification);
                     $('.form').removeClass('loading');
                 } else {
