@@ -7,14 +7,12 @@ services:
       - mongo
     ports:
       - "127.0.0.1:3000:3000"
-    volumes:
-      - "/srv/releasetrackr-data:/data/db"
   
   mongo:
     image: mongo:latest
     environment:
       - MONGO_DATA_DIR=/data/db
     volumes:
-      - "./dbdata:/data/db"
+      - "/root/releasetrackr/dbdata:/data/db"
     ports:
       - "127.0.0.1:27017:27017"
