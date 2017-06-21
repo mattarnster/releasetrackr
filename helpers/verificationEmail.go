@@ -39,6 +39,8 @@ func SendVerificationEmail(email string, vt string) {
 	log.Printf("[Helper][Mailgun] Queued ID: %s Resp: %s\n", id, resp)
 }
 
+// This function returns a struct filled with the required variables for use
+// in the template
 func generateTemplateVarsVerification(vt string) verificationVars {
 	verificationLink := os.Getenv("RT_DOMAIN") + "/verify?key=" + vt
 	return verificationVars{

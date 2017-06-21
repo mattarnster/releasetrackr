@@ -25,6 +25,7 @@ func KillDbSession() {
 	}
 }
 
+// Build the connection string
 func connectionString() string {
 	buildHost := os.Getenv("MONGO_HOST")
 	buildPort := "27017"

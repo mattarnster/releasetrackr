@@ -5,10 +5,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/jasonlvhit/gocron"
 	"releasetrackr/handlers"
 	"releasetrackr/jobs"
 	"releasetrackr/middleware"
+
+	"github.com/jasonlvhit/gocron"
 )
 
 func main() {
@@ -42,6 +43,10 @@ func main() {
 	http.Handle("/track", middleware.ContentTypeMiddleware(httpTrack))
 	http.Handle("/verify", middleware.ContentTypeMiddleware(httpVerify))
 	http.Handle("/stats", middleware.ContentTypeMiddleware(httpStats))
+
+	// Assets for the email templates
+	fs := http.FileServer(http.Dir("assets"))
+	http.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	// Setting up scheduled jobs
 	go func() {

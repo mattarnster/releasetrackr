@@ -17,6 +17,7 @@ type templateVars struct {
 	RepoName    string
 	ReleaseBody template.HTML
 	ReleaseTag  string
+	RTDomain    string
 }
 
 // SendNotificationEmail does exactly what it says on the tin.
@@ -45,10 +46,12 @@ func SendNotificationEmail(repo models.Repo, email string, release models.Releas
 	log.Printf("[Helper][NotificationEmail][Mailgun] Queued ID: %s Resp: %s\n", id, resp)
 }
 
+// This function returns a struct of the required template variables.
 func generateTemplateVars(repo models.Repo, release models.Release) templateVars {
 	return templateVars{
 		RepoName:    repo.Repo,
 		ReleaseBody: template.HTML(blackfriday.MarkdownBasic([]byte(release.Body))),
 		ReleaseTag:  release.Tag,
+		RTDomain:    os.Getenv("RT_DOMAIN"),
 	}
 }
