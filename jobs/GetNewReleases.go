@@ -15,6 +15,10 @@ import (
 
 var repos []models.Repo
 
+var existingRelease models.Release
+var isNewRelease = false
+var newRelease models.Release
+
 // GetNewReleases gets new releases from the Github API
 func GetNewReleases() {
 	// Grab a bunch of repos
@@ -63,9 +67,6 @@ func GetNewReleases() {
 		first := objects[0].(map[string]interface{})
 
 		c = sess.DB("releasetrackr").C("releases")
-		var existingRelease models.Release
-		var isNewRelease = false
-		var newRelease models.Release
 
 		err = c.Find(bson.M{"release_id": first["id"].(float64)}).One(&existingRelease)
 
