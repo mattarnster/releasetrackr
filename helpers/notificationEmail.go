@@ -17,6 +17,7 @@ type templateVars struct {
 	RepoName    string
 	ReleaseBody template.HTML
 	ReleaseTag  string
+	ReleaseUrl  string
 	RTDomain    string
 }
 
@@ -52,6 +53,7 @@ func generateTemplateVars(repo models.Repo, release models.Release) templateVars
 		RepoName:    repo.Repo,
 		ReleaseBody: template.HTML(blackfriday.MarkdownBasic([]byte(release.Body))),
 		ReleaseTag:  release.Tag,
+		ReleaseUrl:  release.URL,
 		RTDomain:    os.Getenv("RT_DOMAIN"),
 	}
 }
