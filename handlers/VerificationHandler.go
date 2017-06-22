@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+	"time"
+
+	uuid "github.com/nu7hatch/gouuid"
 
 	"releasetrackr/helpers"
 	"releasetrackr/models"
@@ -40,20 +44,22 @@ func VerificationHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		sessionTok, _ := uuid.NewV4()
+
 		// If not, we'll set the verified field to true
-		change := bson.M{"$set": bson.M{"verified": true}}
+		change := bson.M{
+			"$set": bson.M{
+				"verified":       true,
+				"session_token":  sessionTok,
+				"session_expiry": time.Now().Add(-18 * time.Hour), // 18 hour expiry
+			},
+		}
 		c.Update(user, change)
 
-		log.Printf("[Handler][VerificationHandler] Verification token pass: %s - %s", key, r.RemoteAddr)
+		log.Printf("[Handler][VerificationHandler] Verification token pass: %s - %s - %s", key, user.Email, r.RemoteAddr)
 
-		// Display a success message to the user.
-		json, _ := json.Marshal(&responses.SuccessResponse{
-			Code:    200,
-			Message: "Verification passed.",
-		})
+		http.Redirect(w, r, os.Getenv("RT_DOMAIN")+"/?st="+sessionTok.String(), 301)
 
-		w.WriteHeader(200)
-		w.Write(json)
 		return
 	}
 }
