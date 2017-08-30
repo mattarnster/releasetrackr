@@ -1,7 +1,7 @@
 version: '3'
 services:
   app:
-    image: mattarnster/releasetrackr:1.0
+    image: mattarnster/releasetrackr:1.1
     env_file: .env
     links:
       - mongo
