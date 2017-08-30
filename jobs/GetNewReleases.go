@@ -108,9 +108,7 @@ func GetNewReleases() {
 			if err != nil {
 				panic(err)
 			}
-		}
 
-		if isNewRelease == true {
 			SendNewReleaseNotification(repo, newRelease)
 		}
 	}
