@@ -8,11 +8,12 @@ import (
 	"os"
 	"time"
 
-	recaptcha "github.com/dpapathanasiou/go-recaptcha"
 	"releasetrackr/helpers"
 	"releasetrackr/models"
 	"releasetrackr/requests"
 	"releasetrackr/responses"
+
+	recaptcha "github.com/dpapathanasiou/go-recaptcha"
 	uuid "github.com/nu7hatch/gouuid"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -75,33 +76,8 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If either the email or repo field aren't filled
-	// in then we'll send them back a 400.
-	if tr.Email == "" {
-		json, _ := json.Marshal(&responses.ErrorResponse{
-			Code:  400,
-			Error: "Missing required field(s)",
-		})
-
-		w.WriteHeader(400)
-		w.Write(json)
-
-		return
-	}
-
-	if tr.Repo == "" {
-		json, _ := json.Marshal(&responses.ErrorResponse{
-			Code:  400,
-			Error: "Missing required field(s)",
-		})
-
-		w.WriteHeader(400)
-		w.Write(json)
-
-		return
-	}
-
-	if tr.RecaptchaResponse == "" {
+	// If any of the required fields are empty, return an error.
+	if tr.Email == "" || tr.Repo == "" || tr.RecaptchaResponse == "" {
 		json, _ := json.Marshal(&responses.ErrorResponse{
 			Code:  400,
 			Error: "Missing required field(s)",
