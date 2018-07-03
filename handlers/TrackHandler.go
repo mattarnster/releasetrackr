@@ -62,7 +62,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract the IP from the request headers
 	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
 	// Determine whether or not they get to continue
-	recaptchaResult := recaptcha.Confirm(ip, tr.RecaptchaResponse)
+	recaptchaResult, _ := recaptcha.Confirm(ip, tr.RecaptchaResponse)
 	// If not...
 	if recaptchaResult == false {
 		json, _ := json.Marshal(&responses.ErrorResponse{
