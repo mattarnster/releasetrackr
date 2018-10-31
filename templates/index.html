@@ -9,17 +9,17 @@
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
-    <div class="wrapper ui one column centered grid container" style="margin-top: 3em;">
+    <div class="wrapper ui two column centered grid container" style="margin-top: 3em;">
         <div class="row">
             <div class="sixteen column">
-                <h1 class="ui header" style="margin-bottom: 0;">{{.Name}}</h1>
-                <h2 class="ui sub header teal" style="margin-top: 0;">GitHub releases delivered straight to your inbox</h2>
+                <h1 class="ui header centered" style="margin-bottom: 0;">{{.Name}}</h1>
+                <h2 class="ui sub header orange centered" style="margin-top: 0;">GitHub releases delivered straight to your inbox</h2>
                 <div class="ui divider"></div>
             </div>
         </div>
         <div class="ten column row">
             <div class="ten wide column">
-                <p>releasetracker uses GitHub's API to notify you of new releases of repos you are interested in.</p>
+                <p><strong>releasetracker</strong> uses GitHub's API to notify you of new releases of repos you are interested in.</p>
                 <p>Simply sign up using the form below, specifying which repo you want to be kept up to date with, and releasetrackr will send you an email every time it detects a new release!</p>
             </div>
         </div>
@@ -84,9 +84,12 @@
                 </form>
             </div>
         </div>
+        <div class="sixteen column row">
+            <p>Made with ❤ in <i class="gb uk flag"></i> by <a class="orange" href="https://twitter.com/mattarnster">@mattarnster</a></p>
+        </div>
     </div>
-    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/semantic-ui/2.2.10/semantic.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/semantic-ui/2.4.2/semantic.min.js"></script>
     <script type="text/javascript">
 
         // Create cookie

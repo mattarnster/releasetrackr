@@ -43,7 +43,8 @@ func GetNewReleases() {
 			log.Printf("[Job][GetNewReleases] API Request failed: %v", err.Error())
 		}
 
-		log.Printf("[Job][GetNewReleases] Github Backoff in %v requests.", resp.Header["X-Ratelimit-Remaining"])
+		log.Printf("[Job][GetNewReleases] Github ratelimit will be hit in in %v requests.", resp.Header["X-Ratelimit-Remaining"])
+		log.Printf("[Job][GetNewReleases] Ratelimit will reset at %v", resp.Header["X-Ratelimit-Reset"])
 
 		defer resp.Body.Close()
 
