@@ -47,7 +47,7 @@ func SendVerificationEmail(email string, vt string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("[Helper][Mailjet] Response: %+v\n", res)
+	fmt.Printf("[Helper][VerificationEmail] Response: %+v\n", res)
 }
 
 // This function returns a struct filled with the required variables for use
