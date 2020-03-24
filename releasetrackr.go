@@ -15,10 +15,16 @@ import (
 func main() {
 	log.Println("[App][Startup] releasetrackr - 1.0 started")
 
-	if os.Getenv("MAILGUN_API_KEY") != "" {
-		log.Println("[Startup] Mailgun API Key detected.")
+	if os.Getenv("MAILJET_API_PUBLIC_KEY") != "" {
+		log.Println("[Startup] Mailjet API Public Key detected.")
 	} else {
-		panic("Couldn't get Mailgun API key from environment variable MAILGUN_API_KEY, make sure this is set.")
+		panic("Couldn't get Mailjet API Public Key from environment variable MAILJET_API_PUBLIC_KEY, make sure this is set.")
+	}
+
+	if os.Getenv("MAILJET_API_PRIVATE_KEY") != "" {
+		log.Println("[Startup] Mailjet API Private Key detected.")
+	} else {
+		panic("Couldn't get Mailjet API Private Key from environment variable MAILJET_API_PRIVATE_KEY, make sure this is set.")
 	}
 
 	if os.Getenv("MONGO_HOST") != "" {
