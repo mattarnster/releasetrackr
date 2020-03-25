@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	"go.mongodb.org/mongo-driver/bson"
 
 	"releasetrackr/helpers"
@@ -95,6 +97,7 @@ func GetNewReleases() {
 			}
 
 			newRelease = models.Release{
+				ID:                 primitive.NewObjectID(),
 				ReleaseID:          first["id"].(float64),
 				URL:                first["html_url"].(string),
 				Tag:                first["tag_name"].(string),
@@ -115,10 +118,13 @@ func GetNewReleases() {
 
 			res := c.FindOneAndUpdate(context.Background(),
 				bson.M{
+					"_id": repo.ID,
+				},
+				bson.M{
 					"$set": bson.M{
-						"LastReleaseID": result.InsertedID,
+						"last_release_id": result.InsertedID,
 					},
-				}, &repo)
+				})
 			if res == nil {
 				panic(err)
 			}
