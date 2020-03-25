@@ -26,9 +26,8 @@ func ClearNonVerifiedUsers() {
 	log.Printf("[Job][ClearNonVerifiedUsers] Clearing users from %v to %v", fromDate, toDate)
 
 	var removeResult *mongo.DeleteResult
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	removeResult, _ = c.DeleteMany(
-		ctx,
+		context.Background(),
 		bson.M{
 			"verified": false,
 			"created": bson.M{
