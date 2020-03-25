@@ -10,7 +10,7 @@ import (
 	"releasetrackr/models"
 	"releasetrackr/responses"
 
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // VerificationHandler handles verification of user emails

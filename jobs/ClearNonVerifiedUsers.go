@@ -4,13 +4,12 @@ import (
 	"context"
 	"log"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"time"
 
 	"releasetrackr/helpers"
-
-	"gopkg.in/mgo.v2/bson"
 )
 
 // ClearNonVerifiedUsers is a scheduled task to remove users from the DB who are not verified.

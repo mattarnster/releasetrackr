@@ -16,8 +16,8 @@ import (
 
 	recaptcha "github.com/dpapathanasiou/go-recaptcha"
 	uuid "github.com/nu7hatch/gouuid"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"gopkg.in/mgo.v2/bson"
 )
 
 var repo = &models.Repo{}
