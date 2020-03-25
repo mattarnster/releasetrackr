@@ -50,11 +50,18 @@ func main() {
 	httpTrack := http.HandlerFunc(handlers.TrackHandler)
 	httpVerify := http.HandlerFunc(handlers.VerificationHandler)
 	httpStats := http.HandlerFunc(handlers.StatsHandler)
+	apiIndex := http.HandlerFunc(handlers.APIIndexHandler)
+	apiToken := http.HandlerFunc(handlers.APITokenHandler)
 
+	// Web
 	http.Handle("/", httpIndex)
 	http.Handle("/track", middleware.ContentTypeMiddleware(httpTrack))
 	http.Handle("/verify", middleware.ContentTypeMiddleware(httpVerify))
 	http.Handle("/stats", middleware.ContentTypeMiddleware(httpStats))
+
+	// API
+	http.Handle("/api", apiIndex)
+	http.Handle("/api/auth", apiToken)
 
 	// Assets for the email templates
 	fs := http.FileServer(http.Dir("assets"))
