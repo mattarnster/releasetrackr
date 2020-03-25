@@ -1,11 +1,9 @@
-FROM golang:1.8-alpine
+FROM golang:1.14.1
 
 WORKDIR /go/src/releasetrackr
 COPY . .
 
-RUN apk add --no-cache git
+RUN go get -d -v ./...
+RUN go install -v ./...
 
-RUN go-wrapper download
-RUN go-wrapper install
-
-CMD ["go-wrapper", "run"]
+CMD ["releasetrackr"]
