@@ -1,13 +1,14 @@
 package jobs
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"releasetrackr/helpers"
 	"releasetrackr/models"
@@ -24,18 +25,27 @@ func GetNewReleases() {
 	// Grab a bunch of repos
 	sess, _ := helpers.GetDbSession()
 
-	c := sess.DB("releasetrackr").C("repos")
-	c.Find(nil).All(&repos)
+	c := sess.Database("releasetrackr").Collection("repos")
 
-	log.Printf("[Job][GetNewReleases] Result count: %v", len(repos))
+	count, err := c.CountDocuments(context.Background(), bson.D{})
+	if err != nil {
+		log.Printf("[Job][GetNewReleases] Failed to find repos")
+		return
+	}
 
-	if len(repos) == 0 {
+	if count == 0 {
 		log.Println("[Job][GetNewReleases] No repos in DB")
 		return
 	}
 
-	// Then start firing off requests to the API
-	for _, repo := range repos {
+	cur, _ := c.Find(context.Background(), bson.D{})
+	defer cur.Close(context.Background())
+
+	log.Printf("[Job][GetNewReleases] Result count: %v", count)
+	for cur.Next(context.Background()) {
+		var repo models.Repo
+		err := cur.Decode(&repo)
+
 		log.Printf("[Job][GetNewReleases] Looking for release for %+v", repo.Repo)
 
 		resp, err := http.Get("https://api.github.com/repos/" + repo.Repo + "/releases")
@@ -67,14 +77,13 @@ func GetNewReleases() {
 
 		first := objects[0].(map[string]interface{})
 
-		c = sess.DB("releasetrackr").C("releases")
+		c = sess.Database("releasetrackr").Collection("releases")
 
-		err = c.Find(bson.M{"release_id": first["id"].(float64)}).One(&existingRelease)
+		err = c.FindOne(context.Background(), bson.M{"release_id": first["id"].(float64)}).Decode(&existingRelease)
 
 		// Not found - Add it to the DB
 		if err != nil {
 			isNewRelease = true
-			newReleaseID := bson.NewObjectId()
 
 			createdAtTime, caTErr := time.Parse(time.RFC3339Nano, first["created_at"].(string))
 			if caTErr != nil {
@@ -86,7 +95,6 @@ func GetNewReleases() {
 			}
 
 			newRelease = models.Release{
-				ID:                 newReleaseID,
 				ReleaseID:          first["id"].(float64),
 				URL:                first["html_url"].(string),
 				Tag:                first["tag_name"].(string),
@@ -99,14 +107,19 @@ func GetNewReleases() {
 
 			log.Printf("[Job][GetNewReleases] New release record: %v", newRelease)
 
-			c.Insert(&newRelease)
+			result, err := c.InsertOne(context.Background(), &newRelease)
 
 			repo.LastReleaseID = newRelease.ID
 
-			c = sess.DB("releasetrackr").C("repos")
+			c = sess.Database("releasetrackr").Collection("repos")
 
-			err = c.UpdateId(repo.ID, &repo)
-			if err != nil {
+			res := c.FindOneAndUpdate(context.Background(),
+				bson.M{
+					"$set": bson.M{
+						"LastReleaseID": result.InsertedID,
+					},
+				}, &repo)
+			if res == nil {
 				panic(err)
 			}
 

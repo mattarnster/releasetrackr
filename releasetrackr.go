@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	"releasetrackr/handlers"
+	// "releasetrackr/handlers"
+
 	"releasetrackr/jobs"
-	"releasetrackr/middleware"
 
 	"github.com/jasonlvhit/gocron"
 )
@@ -40,15 +40,15 @@ func main() {
 	}
 
 	// HTTP Handlers
-	httpIndex := http.HandlerFunc(handlers.IndexHandler)
-	httpTrack := http.HandlerFunc(handlers.TrackHandler)
-	httpVerify := http.HandlerFunc(handlers.VerificationHandler)
-	httpStats := http.HandlerFunc(handlers.StatsHandler)
+	// httpIndex := http.HandlerFunc(handlers.IndexHandler)
+	// httpTrack := http.HandlerFunc(handlers.TrackHandler)
+	// httpVerify := http.HandlerFunc(handlers.VerificationHandler)
+	// httpStats := http.HandlerFunc(handlers.StatsHandler)
 
-	http.Handle("/", httpIndex)
-	http.Handle("/track", middleware.ContentTypeMiddleware(httpTrack))
-	http.Handle("/verify", middleware.ContentTypeMiddleware(httpVerify))
-	http.Handle("/stats", middleware.ContentTypeMiddleware(httpStats))
+	// http.Handle("/", httpIndex)
+	// http.Handle("/track", middleware.ContentTypeMiddleware(httpTrack))
+	// http.Handle("/verify", middleware.ContentTypeMiddleware(httpVerify))
+	// http.Handle("/stats", middleware.ContentTypeMiddleware(httpStats))
 
 	// Assets for the email templates
 	fs := http.FileServer(http.Dir("assets"))

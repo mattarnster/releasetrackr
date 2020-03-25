@@ -1,19 +1,36 @@
 package helpers
 
-import mgo "gopkg.in/mgo.v2"
-import "os"
+import (
+	"context"
+	"os"
+	"time"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
 
 // DbConnection Will hold the global DB Connection
-var DbConnection *mgo.Session
+var DbConnection *mongo.Client
 
 // GetDbSession returns the currently active DB connection (if not, then it creates one)
-func GetDbSession() (*mgo.Session, error) {
+func GetDbSession() (*mongo.Client, error) {
+	// if DbConnection == nil {
+	// 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	// 	err := client.Dial(connectionString())
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	DbConnection = session
+	// }
+	// return DbConnection, nil
 	if DbConnection == nil {
-		session, err := mgo.Dial(connectionString())
+		client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://" + os.Getenv("MONGO_HOST") + ":" + os.Getenv("MONGO_PORT")))
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		err = client.Connect(ctx)
 		if err != nil {
 			return nil, err
 		}
-		DbConnection = session
+		DbConnection = client
 	}
 	return DbConnection, nil
 }
@@ -21,7 +38,8 @@ func GetDbSession() (*mgo.Session, error) {
 // KillDbSession kills the currently active DB session
 func KillDbSession() {
 	if DbConnection != nil {
-		DbConnection.Close()
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		DbConnection.Disconnect(ctx)
 	}
 }
 

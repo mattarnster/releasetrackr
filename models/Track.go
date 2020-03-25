@@ -1,10 +1,12 @@
 package models
 
-import "gopkg.in/mgo.v2/bson"
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 // Track is the schema for the repo tracking functionality
 type Track struct {
-	ID     bson.ObjectId `json:"id" bson:"_id"`
-	UserID bson.ObjectId `json:"userID" bson:"userID"`
-	RepoID bson.ObjectId `json:"repoID" bson:"repoID"`
+	ID     primitive.ObjectID `json:"id" bson:"_id"`
+	UserID primitive.ObjectID `json:"userID" bson:"userID"`
+	RepoID primitive.ObjectID `json:"repoID" bson:"repoID"`
 }

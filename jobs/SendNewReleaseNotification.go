@@ -1,12 +1,13 @@
 package jobs
 
 import (
+	"context"
 	"log"
-
-	"gopkg.in/mgo.v2/bson"
 
 	"releasetrackr/helpers"
 	"releasetrackr/models"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // SendNewReleaseNotification sends a new release notification
@@ -20,26 +21,32 @@ func SendNewReleaseNotification(repo models.Repo, newRelease models.Release) {
 
 	log.Printf("[Job][SendNewReleaseNotification] Starting new release notifications job")
 
-	c := sess.DB("releasetrackr").C("tracks")
+	c := sess.Database("releasetrackr").Collection("tracks")
 
-	var tracks []models.Track
+	count, err := c.CountDocuments(context.Background(), bson.D{})
 
-	c.Find(bson.M{"repoID": repo.ID}).All(&tracks)
+	cur, err := c.Find(context.Background(), bson.M{"repoID": repo.ID})
+	//defer cur.Close(context.Background())
 
-	if len(tracks) == 0 {
+	if count == 0 {
 		return
 	}
 
-	for _, track := range tracks {
-		c = sess.DB("releasetrackr").C("users")
+	for cur.Next(context.TODO()) {
+		log.Println("[+] Got here")
+		var track models.Track
+		_ = cur.Decode(&track)
+
+		c = sess.Database("releasetrackr").Collection("users")
 		var user models.User
-		err := c.FindId(track.UserID).One(&user)
-		if err != nil {
+
+		res := c.FindOne(context.Background(), bson.M{"_id": track.UserID}).Decode(&user)
+		if res != nil {
 			log.Panicf("No user with this ID assigned with this track record. %v %v", track.ID, repo.ID)
 		}
 
 		log.Printf("Sending user notfication %s", user.Email)
 		helpers.SendNotificationEmail(repo, user.Email, newRelease)
 	}
-
+	cur.Close(context.TODO())
 }
