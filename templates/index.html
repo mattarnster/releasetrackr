@@ -72,7 +72,7 @@
                         <input type="text" name="repo" placeholder="facebook/react">
                     </div>
                     <div class="field">
-                        <div class="g-recaptcha" data-sitekey="6LeLhiUUAAAAAPzGlPrqx9w8vQjfBvaEC834ER1S"></div>
+                        <div class="g-recaptcha" data-sitekey="6LdB6uMUAAAAALIsDsfXEc9XaBVbEUDCrhFtbj_6"></div>
                     </div>
                     <button class="ui button" type="submit">Submit</button>
                     <div class="ui icon info message">
@@ -89,7 +89,6 @@
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/semantic-ui/2.4.2/semantic.min.js"></script>
     <script type="text/javascript">
 
         // Create cookie
@@ -165,7 +164,7 @@
             };
 
             $.post('/track', JSON.stringify(json))
-            .success(function(data, status, xhr) {
+            .done(function(data, status, xhr) {
                 $('.validation').empty();
                 $('.validation').append(successfulSubscription);
                 

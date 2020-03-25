@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	// "releasetrackr/handlers"
-
+	"releasetrackr/handlers"
 	"releasetrackr/jobs"
+	"releasetrackr/middleware"
 
 	"github.com/jasonlvhit/gocron"
 )
@@ -39,16 +39,22 @@ func main() {
 		panic("Didn't find RT_DOMAIN in environment, please set it so I know where I am.")
 	}
 
-	// HTTP Handlers
-	// httpIndex := http.HandlerFunc(handlers.IndexHandler)
-	// httpTrack := http.HandlerFunc(handlers.TrackHandler)
-	// httpVerify := http.HandlerFunc(handlers.VerificationHandler)
-	// httpStats := http.HandlerFunc(handlers.StatsHandler)
+	if os.Getenv("RECAPTCHA_SECRET") != "" {
+		log.Println("[Startup] RECAPTCHA_SECRET is " + os.Getenv("RECAPTCHA_SECRET"))
+	} else {
+		panic("Didn't find RECAPTCHA_SECRET in environment, please set it.")
+	}
 
-	// http.Handle("/", httpIndex)
-	// http.Handle("/track", middleware.ContentTypeMiddleware(httpTrack))
-	// http.Handle("/verify", middleware.ContentTypeMiddleware(httpVerify))
-	// http.Handle("/stats", middleware.ContentTypeMiddleware(httpStats))
+	// HTTP Handlers
+	httpIndex := http.HandlerFunc(handlers.IndexHandler)
+	httpTrack := http.HandlerFunc(handlers.TrackHandler)
+	httpVerify := http.HandlerFunc(handlers.VerificationHandler)
+	httpStats := http.HandlerFunc(handlers.StatsHandler)
+
+	http.Handle("/", httpIndex)
+	http.Handle("/track", middleware.ContentTypeMiddleware(httpTrack))
+	http.Handle("/verify", middleware.ContentTypeMiddleware(httpVerify))
+	http.Handle("/stats", middleware.ContentTypeMiddleware(httpStats))
 
 	// Assets for the email templates
 	fs := http.FileServer(http.Dir("assets"))

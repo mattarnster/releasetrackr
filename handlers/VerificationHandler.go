@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -23,10 +24,15 @@ func VerificationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		user := &models.User{}
-		c := sess.DB("releasetrackr").C("users")
+		c := sess.Database("releasetrackr").Collection("users")
 
 		// Find the user that the verification field corresponds to
-		userErr := c.Find(bson.M{"verificationcode": key, "verified": false}).One(&user)
+		userErr := c.FindOne(
+			context.Background(),
+			bson.M{
+				"verificationcode": key,
+				"verified":         false,
+			}).Decode(&user)
 
 		// If it's invalid, display an error back to the user
 		if userErr != nil {
@@ -41,8 +47,16 @@ func VerificationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// If not, we'll set the verified field to true
-		change := bson.M{"$set": bson.M{"verified": true}}
-		c.Update(user, change)
+		change := bson.M{
+			"$set": bson.M{
+				"verified": true,
+			},
+		}
+		c.FindOneAndUpdate(
+			context.Background(),
+			user,
+			change,
+		)
 
 		log.Printf("[Handler][VerificationHandler] Verification token pass: %s - %s", key, r.RemoteAddr)
 

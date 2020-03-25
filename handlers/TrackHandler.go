@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net"
@@ -15,6 +16,7 @@ import (
 
 	recaptcha "github.com/dpapathanasiou/go-recaptcha"
 	uuid "github.com/nu7hatch/gouuid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -62,12 +64,12 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract the IP from the request headers
 	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
 	// Determine whether or not they get to continue
-	recaptchaResult, _ := recaptcha.Confirm(ip, tr.RecaptchaResponse)
+	recaptchaResult, err := recaptcha.Confirm(ip, tr.RecaptchaResponse)
 	// If not...
 	if recaptchaResult == false {
 		json, _ := json.Marshal(&responses.ErrorResponse{
 			Code:  400,
-			Error: "Recaptcha challenge failed!",
+			Error: err.Error(),
 		})
 
 		w.WriteHeader(400)
@@ -99,23 +101,27 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	user := &models.User{}
 
-	c := sess.DB("releasetrackr").C("users")
+	c := sess.Database("releasetrackr").Collection("users")
 
 	// Try and find the existing user (if they exist)
 	// Otherwise create the user.
-	userErr := c.Find(bson.M{"email": tr.Email}).One(&user)
+	userErr := c.FindOne(context.Background(), bson.M{"email": tr.Email}).Decode(&user)
 	if userErr != nil {
 
-		uid := bson.NewObjectId()
+		uid := primitive.NewObjectID()
 		verification, _ := uuid.NewV4()
 
-		c.Insert(&models.User{
+		_, err := c.InsertOne(context.Background(), &models.User{
 			ID:               uid,
 			Email:            tr.Email,
 			VerificationCode: verification.String(),
 			Verified:         false,
 			CreatedAt:        time.Now(),
 		})
+
+		if err != nil {
+			log.Printf("[Handler][TrackHandler] Failed to insert new track record: %s", err.Error())
+		}
 
 		log.Printf("[Handler][TrackHandler] New user, needs verification: %s, %s - {%s}", uid, tr.Email, verification.String())
 
@@ -147,10 +153,10 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c = sess.DB("releasetrackr").C("repos")
+	c = sess.Database("releasetrackr").Collection("repos")
 
 	// Find an existing repo by name
-	repoErr := c.Find(bson.M{"repo": tr.Repo}).One(&repo)
+	repoErr := c.FindOne(context.Background(), bson.M{"repo": tr.Repo}).Decode(&repo)
 
 	var isNewRepo = false
 	var newRepo models.Repo
@@ -159,13 +165,13 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	// then we'll make a new one.
 	if repoErr != nil {
 		newRepo = models.Repo{
-			ID:   bson.NewObjectId(),
+			ID:   primitive.NewObjectID(),
 			Repo: tr.Repo,
 		}
 
 		isNewRepo = true
 
-		err := c.Insert(&newRepo)
+		_, err := c.InsertOne(context.Background(), &newRepo)
 		if err != nil {
 			panic("Unable to insert new repo")
 		}
@@ -177,7 +183,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	// make sure we know what we're searching for.
 	// This is a bit unnessecary to query for the newly
 	// created repo, but whatever.
-	var searchRepo bson.ObjectId
+	var searchRepo primitive.ObjectID
 	if isNewRepo {
 		searchRepo = newRepo.ID
 	} else {
@@ -186,14 +192,15 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 
 	// See if the user already has a subscription to
 	// watch this repo for releases.
-	c = sess.DB("releasetrackr").C("tracks")
+	c = sess.Database("releasetrackr").Collection("tracks")
 	record := &models.Track{}
-	dbtr := c.Find(
+	dbtr := c.FindOne(
+		context.Background(),
 		bson.M{
-			"userID": bson.ObjectId(user.ID),
-			"repoID": bson.ObjectId(searchRepo),
+			"userID": user.ID,
+			"repoID": searchRepo,
 		},
-	).One(&record)
+	).Decode(&record)
 
 	// If they do, we will get no error from the DB,
 	// but the user will get a 409 (Conflict)
@@ -210,10 +217,10 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c = sess.DB("releasetrackr").C("tracks")
+	c = sess.Database("releasetrackr").Collection("tracks")
 
 	// Make a new "track" for this repo & user.
-	var repoID bson.ObjectId
+	var repoID primitive.ObjectID
 
 	if isNewRepo {
 		repoID = newRepo.ID
@@ -222,12 +229,12 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	trModel := &models.Track{
-		ID:     bson.NewObjectId(),
+		ID:     primitive.NewObjectID(),
 		UserID: user.ID,
 		RepoID: repoID,
 	}
 
-	insErr := c.Insert(&trModel)
+	_, insErr := c.InsertOne(context.Background(), &trModel)
 	if insErr != nil {
 		log.Panicf("[Handler][TrackHandler] Could not insert new track request: %v", insErr)
 	}
