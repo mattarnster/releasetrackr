@@ -1,4 +1,4 @@
-package helpers
+package db
 
 import (
 	"context"
@@ -14,15 +14,6 @@ var DbConnection *mongo.Client
 
 // GetDbSession returns the currently active DB connection (if not, then it creates one)
 func GetDbSession() (*mongo.Client, error) {
-	// if DbConnection == nil {
-	// 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	// 	err := client.Dial(connectionString())
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	DbConnection = session
-	// }
-	// return DbConnection, nil
 	if DbConnection == nil {
 		client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://" + os.Getenv("MONGO_HOST") + ":" + os.Getenv("MONGO_PORT")))
 		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)

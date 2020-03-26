@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"releasetrackr/helpers"
+	"releasetrackr/db"
 	"releasetrackr/models"
 	"releasetrackr/responses"
 
@@ -18,7 +18,7 @@ func VerificationHandler(w http.ResponseWriter, r *http.Request) {
 	key := r.URL.Query().Get("key")
 	// If we have something in the ?key= query field...
 	if key != "" {
-		sess, err := helpers.GetDbSession()
+		sess, err := db.GetDbSession()
 		if err != nil {
 			panic("test")
 		}

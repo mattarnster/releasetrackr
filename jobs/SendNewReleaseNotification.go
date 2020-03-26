@@ -4,7 +4,8 @@ import (
 	"context"
 	"log"
 
-	"releasetrackr/helpers"
+	"releasetrackr/db"
+	"releasetrackr/emails"
 	"releasetrackr/models"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,7 +13,7 @@ import (
 
 // SendNewReleaseNotification sends a new release notification
 func SendNewReleaseNotification(repo models.Repo, newRelease models.Release) {
-	sess, err := helpers.GetDbSession()
+	sess, err := db.GetDbSession()
 
 	if err != nil {
 		log.Panicf("Couldn't get DB session: %v", err.Error())
@@ -46,7 +47,7 @@ func SendNewReleaseNotification(repo models.Repo, newRelease models.Release) {
 		}
 
 		log.Printf("Sending user notfication %s", user.Email)
-		helpers.SendNotificationEmail(repo, user.Email, newRelease)
+		emails.SendNotificationEmail(repo, user.Email, newRelease)
 	}
 	cur.Close(context.TODO())
 }

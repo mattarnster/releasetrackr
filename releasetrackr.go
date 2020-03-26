@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	log.Println("[App][Startup] releasetrackr - 1.0 started")
+	log.Println("[Startup] releasetrackr - 2.0 started")
 
 	if os.Getenv("MAILJET_API_PUBLIC_KEY") != "" {
 		log.Println("[Startup] Mailjet API Public Key detected.")
@@ -40,9 +40,15 @@ func main() {
 	}
 
 	if os.Getenv("RECAPTCHA_SECRET") != "" {
-		log.Println("[Startup] RECAPTCHA_SECRET is " + os.Getenv("RECAPTCHA_SECRET"))
+		log.Println("[Startup] RECAPTCHA_SECRET detected.")
 	} else {
 		panic("Didn't find RECAPTCHA_SECRET in environment, please set it.")
+	}
+
+	if os.Getenv("JWT_SECRET") != "" {
+		log.Println("[Startup] JWT_SECRET detected.")
+	} else {
+		panic("Didn't find JWT_SECRET in environment, please set it.")
 	}
 
 	// HTTP Handlers
@@ -52,7 +58,7 @@ func main() {
 	httpStats := http.HandlerFunc(handlers.StatsHandler)
 	apiIndex := http.HandlerFunc(handlers.APIIndexHandler)
 	apiToken := http.HandlerFunc(handlers.APITokenHandler)
-
+	apiUser := http.HandlerFunc(handlers.APIUserHandler)
 	// Web
 	http.Handle("/", httpIndex)
 	http.Handle("/track", middleware.ContentTypeMiddleware(httpTrack))
@@ -60,8 +66,9 @@ func main() {
 	http.Handle("/stats", middleware.ContentTypeMiddleware(httpStats))
 
 	// API
-	http.Handle("/api", apiIndex)
-	http.Handle("/api/auth", apiToken)
+	http.Handle("/api", middleware.ContentTypeMiddleware(apiIndex))
+	http.Handle("/api/auth", middleware.ContentTypeMiddleware(apiToken))
+	http.Handle("/api/user", middleware.ContentTypeMiddleware(middleware.AuthMiddleware(apiUser)))
 
 	// Assets for the email templates
 	fs := http.FileServer(http.Dir("assets"))
@@ -70,7 +77,7 @@ func main() {
 	// Setting up scheduled jobs
 	go func() {
 		gocron.Every(1).Hour().Do(jobs.ClearNonVerifiedUsers)
-		gocron.Every(2).Hours().Do(jobs.GetNewReleases)
+		//gocron.Every(2).Hours().Do(jobs.GetNewReleases)
 		gocron.RunAll()
 		<-gocron.Start()
 	}()

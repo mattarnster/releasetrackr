@@ -12,7 +12,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"releasetrackr/helpers"
+	"releasetrackr/db"
 	"releasetrackr/models"
 )
 
@@ -25,7 +25,7 @@ var newRelease models.Release
 // GetNewReleases gets new releases from the Github API
 func GetNewReleases() {
 	// Grab a bunch of repos
-	sess, _ := helpers.GetDbSession()
+	sess, _ := db.GetDbSession()
 
 	c := sess.Database("releasetrackr").Collection("repos")
 

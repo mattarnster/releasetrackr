@@ -9,7 +9,8 @@ import (
 	"os"
 	"time"
 
-	"releasetrackr/helpers"
+	"releasetrackr/db"
+	"releasetrackr/emails"
 	"releasetrackr/models"
 	"releasetrackr/requests"
 	"releasetrackr/responses"
@@ -94,7 +95,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[Handler][TrackHandler] Incoming track request: %s from %s", tr.Repo, r.RemoteAddr)
 
 	// Grab the DB session from the helpers.
-	sess, err := helpers.GetDbSession()
+	sess, err := db.GetDbSession()
 	if err != nil {
 		panic("Couldn't get DB session")
 	}
@@ -132,7 +133,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 			Message: "Email verification required.",
 		})
 
-		helpers.SendVerificationEmail(tr.Email, verification.String())
+		emails.SendVerificationEmail(tr.Email, verification.String())
 
 		w.WriteHeader(403)
 		w.Write(json)

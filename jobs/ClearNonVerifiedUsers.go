@@ -3,19 +3,18 @@ package jobs
 import (
 	"context"
 	"log"
+	"releasetrackr/db"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"time"
-
-	"releasetrackr/helpers"
 )
 
 // ClearNonVerifiedUsers is a scheduled task to remove users from the DB who are not verified.
 func ClearNonVerifiedUsers() {
 	log.Println("[Job][ClearNonVerifiedUsers] Job started")
-	sess, _ := helpers.GetDbSession()
+	sess, _ := db.GetDbSession()
 
 	c := sess.Database("releasetrackr").Collection("users")
 

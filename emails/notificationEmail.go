@@ -1,4 +1,4 @@
-package helpers
+package emails
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"log"
 	"os"
-
 	"releasetrackr/models"
 
 	"github.com/russross/blackfriday"
