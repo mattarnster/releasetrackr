@@ -17,8 +17,7 @@ import (
 
 	recaptcha "github.com/dpapathanasiou/go-recaptcha"
 	uuid "github.com/nu7hatch/gouuid"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 var repo = &models.Repo{}
@@ -109,7 +108,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	userErr := c.FindOne(context.Background(), bson.M{"email": tr.Email}).Decode(&user)
 	if userErr != nil {
 
-		uid := primitive.NewObjectID()
+		uid := bson.NewObjectID()
 		verification, _ := uuid.NewV4()
 
 		_, err := c.InsertOne(context.Background(), &models.User{
@@ -166,7 +165,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	// then we'll make a new one.
 	if repoErr != nil {
 		newRepo = models.Repo{
-			ID:   primitive.NewObjectID(),
+			ID:   bson.NewObjectID(),
 			Repo: tr.Repo,
 		}
 
@@ -184,7 +183,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	// make sure we know what we're searching for.
 	// This is a bit unnessecary to query for the newly
 	// created repo, but whatever.
-	var searchRepo primitive.ObjectID
+	var searchRepo bson.ObjectID
 	if isNewRepo {
 		searchRepo = newRepo.ID
 	} else {
@@ -221,7 +220,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	c = sess.Database("releasetrackr").Collection("tracks")
 
 	// Make a new "track" for this repo & user.
-	var repoID primitive.ObjectID
+	var repoID bson.ObjectID
 
 	if isNewRepo {
 		repoID = newRepo.ID
@@ -230,7 +229,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	trModel := &models.Track{
-		ID:     primitive.NewObjectID(),
+		ID:     bson.NewObjectID(),
 		UserID: user.ID,
 		RepoID: repoID,
 	}

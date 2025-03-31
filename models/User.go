@@ -7,18 +7,17 @@ import (
 	"releasetrackr/jwttoken"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // User is the user model for the DB schema
 type User struct {
-	ID               primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Email            string             `json:"email" bson:"email,omitempty" valid:"email"`
-	Password         string             `json:"-" bson:"password"`
-	VerificationCode string             `json:"-" bson:"verificationcode"`
-	Verified         bool               `json:"verified" bson:"verified"`
-	CreatedAt        time.Time          `json:"created_at" bson:"created"`
+	ID               bson.ObjectID `json:"id" bson:"_id,omitempty"`
+	Email            string        `json:"email" bson:"email,omitempty" valid:"email"`
+	Password         string        `json:"-" bson:"password"`
+	VerificationCode string        `json:"-" bson:"verificationcode"`
+	Verified         bool          `json:"verified" bson:"verified"`
+	CreatedAt        time.Time     `json:"created_at" bson:"created"`
 }
 
 // GetUserFromJWT retuns a user from a JWT token

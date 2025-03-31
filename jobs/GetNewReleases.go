@@ -3,24 +3,16 @@ package jobs
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
-	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"releasetrackr/db"
 	"releasetrackr/models"
 )
-
-var repos []models.Repo
-
-var existingRelease models.Release
-var isNewRelease = false
-var newRelease models.Release
 
 // GetNewReleases gets new releases from the Github API
 func GetNewReleases() {
@@ -28,10 +20,10 @@ func GetNewReleases() {
 	sess, _ := db.GetDbSession()
 
 	c := sess.Database("releasetrackr").Collection("repos")
-
-	count, err := c.CountDocuments(context.Background(), bson.D{})
+	opts := options.Count().SetHint("_id_")
+	count, err := c.CountDocuments(context.Background(), bson.D{}, opts)
 	if err != nil {
-		log.Printf("[Job][GetNewReleases] Failed to find repos")
+		log.Printf("[Job][GetNewReleases] Failed to find repos %s", err.Error())
 		return
 	}
 
@@ -44,15 +36,19 @@ func GetNewReleases() {
 	defer cur.Close(context.Background())
 
 	log.Printf("[Job][GetNewReleases] Result count: %v", count)
-	for cur.Next(context.Background()) {
-		var repo models.Repo
-		err := cur.Decode(&repo)
-
+	// Get a list of all returned documents and print them out.
+	// See the mongo.Cursor documentation for more examples of using cursors.
+	var repos []models.Repo
+	if err = cur.All(context.TODO(), &repos); err != nil {
+		log.Panic(err)
+	}
+	for _, repo := range repos {
 		log.Printf("[Job][GetNewReleases] Looking for release for %+v", repo.Repo)
 
 		resp, err := http.Get("https://api.github.com/repos/" + repo.Repo + "/releases")
 		if err != nil {
 			log.Printf("[Job][GetNewReleases] API Request failed: %v", err.Error())
+			continue
 		}
 
 		log.Printf("[Job][GetNewReleases] Github ratelimit will be hit in in %v requests.", resp.Header["X-Ratelimit-Remaining"])
@@ -60,60 +56,70 @@ func GetNewReleases() {
 
 		defer resp.Body.Close()
 
-		var f interface{}
+		if resp.StatusCode != 200 {
+			log.Printf("[Job][GetNewReleases] https://api.github.com/%s | Response Status Code: %v", repo.Repo, resp.StatusCode)
+		}
 
-		body, _ := ioutil.ReadAll(resp.Body)
+		var releases []models.GitHubRelease
 
-		err = json.Unmarshal(body, &f)
+		body, _ := io.ReadAll(resp.Body)
+
+		// Print the raw JSON for debugging
+		log.Printf("[Job][GetNewReleases] Raw JSON response: %s", string(body))
+
+		err = json.Unmarshal(body, &releases)
 		if err != nil {
-			log.Fatalf("[Job][GetNewReleases] Error unmarshaling JSON - likely invalid.")
-			return
+			log.Printf("[Job][GetNewReleases] Error unmarshaling JSON - likely invalid: %v", err.Error())
+
+			// Let's try unmarshaling into a generic structure to see the actual format
+			var rawData []map[string]interface{}
+			jsonErr := json.Unmarshal(body, &rawData)
+			if jsonErr == nil && len(rawData) > 0 {
+				log.Printf("[Job][GetNewReleases] First release structure: %+v", rawData[0])
+			}
+
+			continue
 		}
 
-		objects := f.([]interface{})
-
-		if len(objects) == 0 {
+		if len(releases) == 0 {
 			log.Printf("[Job][GetNewReleases] No releases found for %s", repo.Repo)
-			return
+			continue
 		}
 
-		first := objects[0].(map[string]interface{})
+		// Get the latest release (first in the array)
+		latestRelease := releases[0]
 
 		c = sess.Database("releasetrackr").Collection("releases")
 
-		err = c.FindOne(context.Background(), bson.M{"release_id": first["id"].(float64)}).Decode(&existingRelease)
+		// Check if this release already exists in our database
+		var existingRelease models.Release
+		err = c.FindOne(context.Background(), bson.M{"release_id": float64(latestRelease.ID)}).Decode(&existingRelease)
 
 		// Not found - Add it to the DB
 		if err != nil {
-			isNewRelease = true
+			isNewRelease := true
 
-			createdAtTime, caTErr := time.Parse(time.RFC3339Nano, first["created_at"].(string))
-			if caTErr != nil {
-				log.Fatalf("Created at time parse failed %v", caTErr.Error())
-			}
-			publishedAtTime, paTErr := time.Parse(time.RFC3339Nano, first["published_at"].(string))
-			if paTErr != nil {
-				log.Fatalf("Published at time parse failed: %v", paTErr.Error())
-			}
-
-			newRelease = models.Release{
-				ID:                 primitive.NewObjectID(),
-				ReleaseID:          first["id"].(float64),
-				URL:                first["html_url"].(string),
-				Tag:                first["tag_name"].(string),
-				Name:               first["name"].(string),
-				ReleaseCreatedAt:   createdAtTime,
-				ReleasePublishedAt: publishedAtTime,
-				Body:               first["body"].(string),
+			newRelease := models.Release{
+				ID:                 bson.NewObjectID(),
+				ReleaseID:          float64(latestRelease.ID),
+				URL:                latestRelease.HTMLURL,
+				Tag:                latestRelease.TagName,
+				Name:               latestRelease.Name,
+				ReleaseCreatedAt:   latestRelease.CreatedAt,
+				ReleasePublishedAt: latestRelease.PublishedAt,
+				Body:               latestRelease.Body,
 				RepoID:             repo.ID,
 			}
 
 			log.Printf("[Job][GetNewReleases] New release record: %v", newRelease)
 
-			result, err := c.InsertOne(context.Background(), &newRelease)
+			_, err := c.InsertOne(context.Background(), &newRelease)
+			if err != nil {
+				log.Printf("[Job][GetNewReleases] Failed to insert new release: %v", err.Error())
+				continue
+			}
 
-			repo.LastReleaseID = newRelease.ID
-
+			// Update the repo with the new release ID
 			c = sess.Database("releasetrackr").Collection("repos")
 
 			res := c.FindOneAndUpdate(context.Background(),
@@ -122,14 +128,17 @@ func GetNewReleases() {
 				},
 				bson.M{
 					"$set": bson.M{
-						"last_release_id": result.InsertedID,
+						"last_release_id": newRelease.ID,
 					},
 				})
-			if res == nil {
-				panic(err)
+			if res.Err() != nil {
+				log.Printf("[Job][GetNewReleases] Failed to update repo with new release ID: %v", res.Err())
+				continue
 			}
 
-			SendNewReleaseNotification(repo, newRelease)
+			if isNewRelease {
+				SendNewReleaseNotification(repo, newRelease)
+			}
 		}
 	}
 }

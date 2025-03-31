@@ -23,19 +23,21 @@ func SendNewReleaseNotification(repo models.Repo, newRelease models.Release) {
 	log.Printf("[Job][SendNewReleaseNotification] Starting new release notifications job")
 
 	c := sess.Database("releasetrackr").Collection("tracks")
-
-	count, err := c.CountDocuments(context.Background(), bson.D{})
+	// opts := options.Count().SetHint("_id_")
+	// count, err := c.CountDocuments(context.Background(), bson.D{}, opts)
 
 	cur, err := c.Find(context.Background(), bson.M{"repoID": repo.ID})
-	//defer cur.Close(context.Background())
 
-	if count == 0 {
-		return
+	defer cur.Close(context.Background())
+
+	// if count == 0 {
+	// 	return
+	// }
+	var tracks []models.Track
+	if err = cur.All(context.Background(), &tracks); err != nil {
+		log.Panic(err)
 	}
-
-	for cur.Next(context.TODO()) {
-		log.Println("[+] Got here")
-		var track models.Track
+	for _, track := range tracks {
 		_ = cur.Decode(&track)
 
 		c = sess.Database("releasetrackr").Collection("users")
@@ -49,5 +51,5 @@ func SendNewReleaseNotification(repo models.Repo, newRelease models.Release) {
 		log.Printf("Sending user notfication %s", user.Email)
 		emails.SendNotificationEmail(repo, user.Email, newRelease)
 	}
-	cur.Close(context.TODO())
+	cur.Close(context.Background())
 }

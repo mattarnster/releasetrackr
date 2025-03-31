@@ -5,8 +5,8 @@ import (
 	"log"
 	"releasetrackr/db"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"time"
 )
@@ -14,7 +14,10 @@ import (
 // ClearNonVerifiedUsers is a scheduled task to remove users from the DB who are not verified.
 func ClearNonVerifiedUsers() {
 	log.Println("[Job][ClearNonVerifiedUsers] Job started")
-	sess, _ := db.GetDbSession()
+	sess, err := db.GetDbSession()
+	if err != nil {
+		panic(err)
+	}
 
 	c := sess.Database("releasetrackr").Collection("users")
 
@@ -24,7 +27,7 @@ func ClearNonVerifiedUsers() {
 	log.Printf("[Job][ClearNonVerifiedUsers] Clearing users from %v to %v", fromDate, toDate)
 
 	var removeResult *mongo.DeleteResult
-	removeResult, _ = c.DeleteMany(
+	removeResult, err = c.DeleteMany(
 		context.Background(),
 		bson.M{
 			"verified": false,
@@ -34,5 +37,8 @@ func ClearNonVerifiedUsers() {
 			},
 		},
 	)
+	if err != nil {
+		panic(err)
+	}
 	log.Printf("[Job][ClearNonVerifiedUsers] %d users cleared", removeResult.DeletedCount)
 }

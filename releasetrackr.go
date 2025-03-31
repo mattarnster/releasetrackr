@@ -1,18 +1,27 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/joho/godotenv"
 
 	"releasetrackr/handlers"
 	"releasetrackr/jobs"
 	"releasetrackr/middleware"
-
-	"github.com/jasonlvhit/gocron"
 )
 
 func main() {
+	// Load .env file if it exists
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: No .env file found or error loading it. Using environment variables.")
+	} else {
+		log.Println("[Startup] Loaded environment variables from .env file")
+	}
+
 	log.Println("[Startup] releasetrackr - 2.0 started")
 
 	if os.Getenv("MAILJET_API_PUBLIC_KEY") != "" {
@@ -76,10 +85,27 @@ func main() {
 
 	// Setting up scheduled jobs
 	go func() {
-		gocron.Every(1).Hour().Do(jobs.ClearNonVerifiedUsers)
-		//gocron.Every(2).Hours().Do(jobs.GetNewReleases)
-		gocron.RunAll()
-		<-gocron.Start()
+		// gocron.Every(1).Hour().Do(jobs.ClearNonVerifiedUsers)
+		// //gocron.Every(2).Hours().Do(jobs.GetNewReleases)
+		// gocron.RunAll()
+		// <-gocron.Start()
+		for true {
+			fmt.Println("Running scheduled job: ClearNonVerifiedUsers")
+			jobs.ClearNonVerifiedUsers()
+			time.Sleep(2 * time.Hour)
+		}
+	}()
+
+	go func() {
+		// gocron.Every(1).Hour().Do(jobs.ClearNonVerifiedUsers)
+		// //gocron.Every(2).Hours().Do(jobs.GetNewReleases)
+		// gocron.RunAll()
+		// <-gocron.Start()
+		for true {
+			fmt.Println("Running scheduled job: GetNewReleases")
+			jobs.GetNewReleases()
+			time.Sleep(5 * time.Minute)
+		}
 	}()
 
 	http.ListenAndServe(":3000", nil)
